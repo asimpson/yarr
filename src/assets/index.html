@@ -276,7 +276,7 @@
                     </button>
                 </dropdown>
             </div>
-            <div id="item-list-scroll" class="pane-scroll p-2 border-top" v-scroll="loadMoreItems" ref="itemlist">
+            <div id="item-list-scroll" class="pane-scroll p-2 border-top" ref="itemlist">
                 <label v-for="item in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
@@ -294,7 +294,8 @@
                         <div>{{ item.title || 'untitled' }}</div>
                     </div>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore"></button>
+                <button class="btn btn-outline btn-block my-3" v-if="itemsHasMore && !loading.items" @click="loadMoreItems()">Load more</button>
+                <button class="btn btn-link btn-block loading my-3" v-if="loading.items"></button>
             </div>
             <div class="px-3 py-2 border-top text-danger text-break" v-if="feed_errors[current.feed.id]">
                 {{ feed_errors[current.feed.id] }}
@@ -342,7 +343,7 @@
                 <button class="toolbar-item" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || (!itemsHasMore && itemSelected == items[items.length - 1].id)">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
                 <button class="toolbar-item" @click="itemSelected=null" title="Close Article">

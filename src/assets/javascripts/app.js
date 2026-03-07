@@ -56,14 +56,6 @@ var debounce = function(callback, wait) {
   }
 }
 
-Vue.directive('scroll', {
-  inserted: function(el, binding) {
-    el.addEventListener('scroll', debounce(function(event) {
-      binding.value(event, el)
-    }, 200))
-  },
-})
-
 Vue.directive('focus', {
   inserted: function(el) {
     el.focus()
@@ -236,26 +228,6 @@ var vm = new Vue({
     })
     this.updateMetaTheme(app.settings.theme_name)
   },
-  mounted: function() {
-    this.windowScrollHandler = debounce(function() {
-      if (!isSmallScreenLayout()) return
-      if (this.feedSelected === null || this.itemSelected !== null) return
-      this.loadMoreItems()
-    }.bind(this), 150)
-
-    this.windowResizeHandler = debounce(function() {
-      if (!isSmallScreenLayout()) return
-      if (this.feedSelected === null) return
-      this.loadMoreItems()
-    }.bind(this), 150)
-
-    window.addEventListener('scroll', this.windowScrollHandler, {passive: true})
-    window.addEventListener('resize', this.windowResizeHandler, {passive: true})
-  },
-  beforeDestroy: function() {
-    window.removeEventListener('scroll', this.windowScrollHandler)
-    window.removeEventListener('resize', this.windowResizeHandler)
-  },
   data: function() {
     var s = app.settings
     return {
@@ -420,7 +392,6 @@ var vm = new Vue({
       if (isSmallScreenLayout()) {
         this.$nextTick(function() {
           scrollIntoViewStart(newVal === null ? this.$refs.feedpane : this.$refs.itemlistpane)
-          this.loadMoreItems()
         }.bind(this))
       } else if (this.$refs.itemlist) {
         this.$refs.itemlist.scrollTop = 0
@@ -430,6 +401,11 @@ var vm = new Vue({
       this.itemSelectedReadability = ''
       if (newVal === null) {
         this.itemSelectedDetails = null
+        if (oldVal !== undefined && isSmallScreenLayout()) {
+          this.$nextTick(function() {
+            scrollIntoViewStart(this.$refs.itemlistpane)
+          }.bind(this))
+        }
         return
       }
 
@@ -554,40 +530,12 @@ var vm = new Vue({
         }
         vm.itemsHasMore = data.has_more
         vm.loading.items = false
-
-        // load more if there's some space left at the bottom of the item list.
-        vm.$nextTick(function() {
-          if (vm.itemsHasMore && !vm.loading.items && vm.itemListCloseToBottom()) {
-            vm.refreshItems(true)
-          }
-        })
       })
     },
-    itemListCloseToBottom: function() {
-      // approx. vertical space at the bottom of the list (loading el & paddings) when 1rem = 16px
-      var bottomSpace = 70
-      var scale = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16
-
-      var el = this.$refs.itemlist
-      if (!el) return false
-
-      if (isSmallScreenLayout()) {
-        if (this.itemSelected !== null) return false
-        var rect = el.getBoundingClientRect()
-        if (rect.height === 0) return false
-        return (rect.bottom - window.innerHeight) < bottomSpace * scale
-      }
-
-      if (el.scrollHeight === 0) return false  // element is invisible (responsive design)
-
-      var closeToBottom = (el.scrollHeight - el.scrollTop - el.offsetHeight) < bottomSpace * scale
-      return closeToBottom
-    },
-    loadMoreItems: function(event, el) {
+    loadMoreItems: function() {
       if (!this.itemsHasMore) return
       if (this.loading.items) return
-      if (this.itemListCloseToBottom()) return this.refreshItems(true)
-      if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
+      return this.refreshItems(true)
     },
     markItemsRead: function() {
       var query = this.getItemsQuery()
@@ -837,7 +785,18 @@ var vm = new Vue({
       }
 
       var newPosition = itemPosition + relativePosition
-      if (newPosition < 0 || newPosition >= vm.items.length) return
+      if (newPosition < 0) return
+
+      if (newPosition >= vm.items.length) {
+        if (!vm.itemsHasMore) return
+        var request = vm.loadMoreItems()
+        if (!request || typeof request.then != 'function') return
+        return request.then(function() {
+          if (newPosition < vm.items.length) {
+            vm.itemSelected = vm.items[newPosition].id
+          }
+        })
+      }
 
       vm.itemSelected = vm.items[newPosition].id
 
@@ -848,8 +807,6 @@ var vm = new Vue({
         var target = handle && handle.parentElement
 
         if (target && scroll) scrollto(target, scroll)
-
-        vm.loadMoreItems()
       })
     },
     // navigation helper, navigate relative to selected feed

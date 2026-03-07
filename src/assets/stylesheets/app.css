@@ -563,8 +563,14 @@ a,
   display: flex !important;
 }
 
-#app.feed-selected #col-item-list,
-#app.item-selected #col-item-list,
+#app.feed-selected #col-item-list {
+  display: flex !important;
+}
+
+#app.item-selected #col-item-list {
+  display: none !important;
+}
+
 #app.item-selected #col-item {
   display: flex !important;
 }
