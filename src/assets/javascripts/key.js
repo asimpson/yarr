@@ -4,13 +4,15 @@ var helperFunctions = {
     var scroll = document.querySelector('.content')
     if (!scroll) return
 
-    var height = scroll.getBoundingClientRect().height
+    var height = Math.min(scroll.getBoundingClientRect().height, window.innerHeight || scroll.getBoundingClientRect().height)
     var newpos = scroll.scrollTop + (height - padding) * direction
 
-    if (typeof scroll.scrollTo == 'function') {
+    if ((scroll.scrollHeight - scroll.clientHeight) > 1 && typeof scroll.scrollTo == 'function') {
       scroll.scrollTo({top: newpos, left: 0, behavior: 'smooth'})
-    } else {
+    } else if ((scroll.scrollHeight - scroll.clientHeight) > 1) {
       scroll.scrollTop = newpos
+    } else if (typeof window.scrollBy == 'function') {
+      window.scrollBy({top: (height - padding) * direction, left: 0, behavior: 'smooth'})
     }
   }
 }

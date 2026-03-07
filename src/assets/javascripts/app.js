@@ -2,7 +2,30 @@
 
 var TITLE = document.title
 
+function isSmallScreenLayout() {
+  if (typeof window.matchMedia != 'function') return false
+  return window.matchMedia('(max-width: 767.98px)').matches
+}
+
+function canScrollWithin(el) {
+  return !!el && (el.scrollHeight - el.clientHeight) > 1
+}
+
+function scrollIntoViewStart(el) {
+  if (!el || typeof el.scrollIntoView != 'function') return
+
+  try {
+    el.scrollIntoView({block: 'start'})
+  } catch (e) {
+    el.scrollIntoView(true)
+  }
+}
+
 function scrollto(target, scroll) {
+  if (!canScrollWithin(scroll)) {
+    return scrollIntoViewStart(target)
+  }
+
   var padding = 10
   var targetRect = target.getBoundingClientRect()
   var scrollRect = scroll.getBoundingClientRect()
@@ -213,6 +236,26 @@ var vm = new Vue({
     })
     this.updateMetaTheme(app.settings.theme_name)
   },
+  mounted: function() {
+    this.windowScrollHandler = debounce(function() {
+      if (!isSmallScreenLayout()) return
+      if (this.feedSelected === null || this.itemSelected !== null) return
+      this.loadMoreItems()
+    }.bind(this), 150)
+
+    this.windowResizeHandler = debounce(function() {
+      if (!isSmallScreenLayout()) return
+      if (this.feedSelected === null) return
+      this.loadMoreItems()
+    }.bind(this), 150)
+
+    window.addEventListener('scroll', this.windowScrollHandler, {passive: true})
+    window.addEventListener('resize', this.windowResizeHandler, {passive: true})
+  },
+  beforeDestroy: function() {
+    window.removeEventListener('scroll', this.windowScrollHandler)
+    window.removeEventListener('resize', this.windowResizeHandler)
+  },
   data: function() {
     var s = app.settings
     return {
@@ -373,7 +416,15 @@ var vm = new Vue({
       this.items = []
       this.itemsHasMore = true
       api.settings.update({feed: newVal}).then(this.refreshItems.bind(this, false))
-      if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
+
+      if (isSmallScreenLayout()) {
+        this.$nextTick(function() {
+          scrollIntoViewStart(newVal === null ? this.$refs.feedpane : this.$refs.itemlistpane)
+          this.loadMoreItems()
+        }.bind(this))
+      } else if (this.$refs.itemlist) {
+        this.$refs.itemlist.scrollTop = 0
+      }
     },
     'itemSelected': function(newVal, oldVal) {
       this.itemSelectedReadability = ''
@@ -381,10 +432,24 @@ var vm = new Vue({
         this.itemSelectedDetails = null
         return
       }
-      if (this.$refs.content) this.$refs.content.scrollTop = 0
+
+      if (isSmallScreenLayout()) {
+        this.$nextTick(function() {
+          scrollIntoViewStart(this.$refs.itempane)
+        }.bind(this))
+      } else if (this.$refs.content) {
+        this.$refs.content.scrollTop = 0
+      }
 
       api.items.get(newVal).then(function(item) {
         this.itemSelectedDetails = item
+
+        this.$nextTick(function() {
+          if (isSmallScreenLayout()) {
+            scrollIntoViewStart(this.$refs.itempane)
+          }
+        }.bind(this))
+
         if (this.itemSelectedDetails.status == 'unread') {
           api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
             this.feedStats[this.itemSelectedDetails.feed_id].unread -= 1
@@ -504,6 +569,14 @@ var vm = new Vue({
       var scale = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16
 
       var el = this.$refs.itemlist
+      if (!el) return false
+
+      if (isSmallScreenLayout()) {
+        if (this.itemSelected !== null) return false
+        var rect = el.getBoundingClientRect()
+        if (rect.height === 0) return false
+        return (rect.bottom - window.innerHeight) < bottomSpace * scale
+      }
 
       if (el.scrollHeight === 0) return false  // element is invisible (responsive design)
 

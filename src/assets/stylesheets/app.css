@@ -6,8 +6,31 @@ html {
   font-size: 15px !important;
 }
 
+html,
 body {
-  overscroll-behavior: none;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+#app {
+  display: block;
+  min-height: 100%;
+}
+
+.app-pane {
+  min-width: 0;
+  height: auto !important;
+  border-right-width: 0 !important;
+}
+
+.pane-scroll {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible !important;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* bootstrap customizations */
@@ -303,6 +326,7 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .drag {
+  display: none;
   position: absolute;
   top: 0;
   right: 0;
@@ -529,80 +553,25 @@ a,
   margin: 0 !important;
 }
 
-/* responsive layout
-
-   tablet:
-     none selected: show feed list & item list
-     feed selected: show feed list & item list
-     item selected: show item
-   mobile:
-     none selected: show feed list
-     feed selected: show item list
-     item selected: show item
-*/
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-  #app #col-feed-list {
-    width: 35% !important;
-  }
-  #app #col-item-list {
-    width: 65% !important;
-    border-right-width: 0 !important;
-  }
-  #app #col-item {
-    display: none !important;
-  }
-
-  #app.item-selected #col-feed-list {
-    display: none !important;
-  }
-  #app.item-selected #col-item-list {
-    display: none !important;
-  }
-  #app.item-selected #col-item {
-    display: flex !important;
-  }
+#app #col-feed-list,
+#app #col-item-list,
+#app #col-item {
+  display: none !important;
 }
 
-@media (max-width: 767.98px) {
-  #app #col-feed-list {
-    width: 100% !important;
-    border-right-width: 0 !important;
-  }
-  #app #col-item-list {
-    width: 100% !important;
-    display: none !important;
-    border-right-width: 0 !important;
-  }
-  #app #col-item {
-    width: 100% !important;
-    display: none !important;
-  }
-
-  #app.feed-selected #col-feed-list {
-    display: none !important;
-  }
-  #app.feed-selected #col-item-list {
-    display: flex !important;
-  }
-
-  #app.item-selected #col-feed-list {
-    display: none !important;
-  }
-  #app.item-selected #col-item-list {
-    display: none !important;
-  }
-  #app.item-selected #col-item {
-    display: flex !important;
-  }
+#app:not(.feed-selected):not(.item-selected) #col-feed-list {
+  display: flex !important;
 }
 
-/* styles for both mobile & tablet layout */
+#app.feed-selected #col-item-list,
+#app.item-selected #col-item-list,
+#app.item-selected #col-item {
+  display: flex !important;
+}
+
+/* styles for mobile & tablet layout */
 
 @media (max-width: 991.98px) {
-  .drag {
-    cursor: default;
-  }
   .toolbar {
     min-height: 3rem !important;
     max-height: 3rem !important;
@@ -610,5 +579,84 @@ a,
   .toolbar-item,
   .toolbar-search {
     padding: .5rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  #app #col-feed-list,
+  #app #col-item-list,
+  #app #col-item {
+    width: 100% !important;
+  }
+
+  .content {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  #app {
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .app-pane {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+
+  .pane-scroll {
+    flex: 1 1 auto;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  #app #col-feed-list {
+    display: flex !important;
+    width: 35% !important;
+  }
+
+  #app #col-item-list {
+    display: flex !important;
+    width: 65% !important;
+    border-right-width: 0 !important;
+  }
+
+  #app #col-item {
+    display: none !important;
+  }
+
+  #app.item-selected #col-feed-list {
+    display: none !important;
+  }
+
+  #app.item-selected #col-item-list {
+    display: none !important;
+  }
+
+  #app.item-selected #col-item {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .drag {
+    display: block;
+    cursor: col-resize;
+  }
+
+  #app #col-feed-list,
+  #app #col-item-list,
+  #app #col-item {
+    display: flex !important;
+  }
+
+  #app #col-feed-list,
+  #app #col-item-list {
+    border-right-width: 1px !important;
   }
 }
