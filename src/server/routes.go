@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -41,6 +42,7 @@ func (s *Server) handler() http.Handler {
 	}
 
 	r.For("/", s.handleIndex)
+	r.For("/items/:id", s.handleItemPage)
 	r.For("/manifest.json", s.handleManifest)
 	r.For("/static/*path", s.handleStatic)
 	r.For("/api/status", s.handleStatus)
@@ -308,6 +310,62 @@ func (s *Server) handleFeed(c *router.Context) {
 	}
 }
 
+func (s *Server) preparedItem(id int64) (*storage.Item, *storage.Feed) {
+	item := s.db.GetItem(id)
+	if item == nil {
+		return nil, nil
+	}
+
+	feed := s.db.GetFeed(item.FeedId)
+
+	// runtime fix for relative links
+	if !htmlutil.IsAPossibleLink(item.Link) && feed != nil {
+		item.Link = htmlutil.AbsoluteUrl(item.Link, feed.Link)
+	}
+
+	item.Content = sanitizer.Sanitize(item.Link, item.Content)
+	for i, link := range item.MediaLinks {
+		item.MediaLinks[i].Description = sanitizer.Sanitize(item.Link, link.Description)
+	}
+
+	if item.Title == "" {
+		item.Title = htmlutil.TruncateText(htmlutil.ExtractText(item.Content), 140)
+	}
+	if item.Title == "" {
+		item.Title = "untitled"
+	}
+
+	return item, feed
+}
+
+func (s *Server) handleItemPage(c *router.Context) {
+	id, err := c.VarInt64("id")
+	if err != nil {
+		c.Out.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	item, feed := s.preparedItem(id)
+	if item == nil {
+		c.Out.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if item.Status == storage.UNREAD {
+		s.db.UpdateItemStatus(item.Id, storage.READ)
+		item.Status = storage.READ
+	}
+
+	c.HTML(http.StatusOK, assets.Template("item.html"), map[string]interface{}{
+		"base_path": s.BasePath,
+		"settings":  s.db.GetSettings(),
+		"item":      item,
+		"feed":      feed,
+		"published": item.Date.Format("January 2, 2006 15:04"),
+		"content":   template.HTML(item.Content),
+	})
+}
+
 func (s *Server) handleItem(c *router.Context) {
 	id, err := c.VarInt64("id")
 	if err != nil {
@@ -315,22 +373,10 @@ func (s *Server) handleItem(c *router.Context) {
 		return
 	}
 	if c.Req.Method == "GET" {
-		item := s.db.GetItem(id)
+		item, _ := s.preparedItem(id)
 		if item == nil {
 			c.Out.WriteHeader(http.StatusBadRequest)
 			return
-		}
-
-		// runtime fix for relative links
-		if !htmlutil.IsAPossibleLink(item.Link) {
-			if feed := s.db.GetFeed(item.FeedId); feed != nil {
-				item.Link = htmlutil.AbsoluteUrl(item.Link, feed.Link)
-			}
-		}
-
-		item.Content = sanitizer.Sanitize(item.Link, item.Content)
-		for i, link := range item.MediaLinks {
-			item.MediaLinks[i].Description = sanitizer.Sanitize(item.Link, link.Description)
 		}
 
 		c.JSON(http.StatusOK, item)
@@ -352,7 +398,6 @@ func (s *Server) handleItem(c *router.Context) {
 
 func (s *Server) handleItemList(c *router.Context) {
 	if c.Req.Method == "GET" {
-		perPage := 20
 		query := c.Req.URL.Query()
 
 		filter := storage.ItemFilter{}
@@ -374,22 +419,25 @@ func (s *Server) handleItemList(c *router.Context) {
 		}
 		newestFirst := query.Get("oldest_first") != "true"
 
-		items := s.db.ListItems(filter, perPage+1, newestFirst, true)
-		hasMore := false
-		if len(items) == perPage+1 {
-			hasMore = true
-			items = items[:perPage]
+		total := s.db.CountItems(filter)
+		items := make([]storage.Item, 0)
+		if total > 0 {
+			items = s.db.ListItems(filter, total, newestFirst, true)
 		}
 
 		for i, item := range items {
+			text := htmlutil.ExtractText(item.Content)
 			if item.Title == "" {
-				text := htmlutil.ExtractText(item.Content)
 				items[i].Title = htmlutil.TruncateText(text, 140)
 			}
+			if items[i].Title == "" {
+				items[i].Title = "untitled"
+			}
+			items[i].Content = htmlutil.TruncateText(text, 280)
 		}
 		c.JSON(http.StatusOK, map[string]interface{}{
 			"list":     items,
-			"has_more": hasMore,
+			"has_more": false,
 		})
 	} else if c.Req.Method == "PUT" {
 		filter := storage.MarkFilter{}

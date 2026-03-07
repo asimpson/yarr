@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% .item.Title %} - yarr!</title>
+    <link rel="stylesheet" href="{% .base_path %}/static/stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="{% .base_path %}/static/stylesheets/app.css">
+    <link rel="icon" href="{% .base_path %}/static/graphicarts/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="{% .base_path %}/static/graphicarts/favicon.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+<body class="theme-{% .settings.theme_name %}">
+    <main class="px-3 py-3 py-md-4">
+        <div class="content-wrapper">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <a class="btn btn-default px-3" href="{% .base_path %}/">Back</a>
+                {% if .item.Link %}
+                    <a class="btn btn-link" href="{% .item.Link %}" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer">Open original</a>
+                {% end %}
+            </div>
+
+            <header class="mb-4">
+                <h1 class="mb-3"><b>{% .item.Title %}</b></h1>
+                <div class="text-muted">
+                    {% if .feed %}
+                        <div>{% .feed.Title %}</div>
+                    {% end %}
+                    <time>{% .published %}</time>
+                </div>
+            </header>
+
+            <article class="content px-0 pb-5{% if eq .settings.theme_font "serif" %} font-serif{% else if eq .settings.theme_font "monospace" %} font-monospace{% end %}" style="font-size: {% .settings.theme_size %}rem;">
+                {% .content %}
+            </article>
+        </div>
+    </main>
+</body>
+</html>

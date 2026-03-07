@@ -17,7 +17,7 @@
     </script>
 </head>
 <body class="theme-{% .settings.theme_name %}">
-    <div id="app" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null}" v-cloak>
+    <div id="app" :class="{'feed-selected': feedSelected !== null}" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" ref="feedpane" class="app-pane position-relative d-flex flex-column border-right flex-shrink-0" :style="{width: feedListWidth+'px'}">
             <drag :width="feedListWidth" @resize="resizeFeedList"></drag>
@@ -119,11 +119,6 @@
                         <span class="icon mr-1">{% inline "upload.svg" %}</span>
                         Export
                     </a>
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" @click="showSettings('shortcuts')">
-                        <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
-                        Shortcuts
-                    </button>
                     <div class="dropdown-divider" v-if="authenticated"></div>
                     <button class="dropdown-item" v-if="authenticated" @click="logout()">
                         <span class="icon mr-1">{% inline "log-out.svg" %}</span>
@@ -183,8 +178,7 @@
             </div>
         </div>
         <!-- item list -->
-        <div id="col-item-list" ref="itemlistpane" class="app-pane position-relative d-flex flex-column border-right flex-shrink-0" :style="{width: itemListWidth+'px'}">
-            <drag :width="itemListWidth" @resize="resizeItemList"></drag>
+        <div id="col-item-list" ref="itemlistpane" class="app-pane d-flex flex-column w-100">
             <div class="px-2 toolbar d-flex align-items-center">
                 <button class="toolbar-item mr-2 d-block d-md-none"
                         @click="feedSelected = null"
@@ -277,10 +271,9 @@
                 </dropdown>
             </div>
             <div id="item-list-scroll" class="pane-scroll p-2 border-top" ref="itemlist">
-                <label v-for="item in items" :key="item.id"
-                       class="selectgroup">
-                    <input type="radio" name="item" :value="item.id" v-model="itemSelected">
-                    <div class="selectgroup-label d-flex flex-column">
+                <div v-for="item in items" :key="item.id" class="selectgroup">
+                    <a class="selectgroup-label d-flex flex-column text-reset text-decoration-none"
+                       :href="'./items/' + item.id">
                         <div style="line-height: 100%; opacity: .7; margin-bottom: .1rem;" class="d-flex align-items-center">
                             <transition name="indicator">
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
@@ -292,92 +285,13 @@
                             <small class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></small>
                         </div>
                         <div>{{ item.title || 'untitled' }}</div>
-                    </div>
-                </label>
-                <button class="btn btn-outline btn-block my-3" v-if="itemsHasMore && !loading.items" @click="loadMoreItems()">Load more</button>
+                        <div class="article-snippet mt-2 text-muted" v-if="item.content">{{ item.content }}</div>
+                    </a>
+                </div>
                 <button class="btn btn-link btn-block loading my-3" v-if="loading.items"></button>
             </div>
             <div class="px-3 py-2 border-top text-danger text-break" v-if="feed_errors[current.feed.id]">
                 {{ feed_errors[current.feed.id] }}
-            </div>
-        </div>
-        <!-- item show -->
-        <div id="col-item" ref="itempane" class="app-pane d-flex flex-column w-100">
-            <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
-                <button class="toolbar-item"
-                        @click="toggleItemStarred(itemSelectedDetails)"
-                        title="Mark Starred">
-                    <span class="icon" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
-                    <span class="icon" v-else-if="itemSelectedDetails.status!='starred'" >{% inline "star.svg" %}</span>
-                </button>
-                <button class="toolbar-item"
-                        title="Mark Unread"
-                        @click="toggleItemRead(itemSelectedDetails)">
-                    <span class="icon" v-if="itemSelectedDetails.status=='unread'">{% inline "circle-full.svg" %}</span>
-                    <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "circle.svg" %}</span>
-                </button>
-                <dropdown class="settings-dropdown" toggle-class="toolbar-item px-2" drop="center" title="Appearance">
-                    <template v-slot:button>
-                        <span class="icon">{% inline "sliders.svg" %}</span>
-                    </template>
-
-                    <button class="dropdown-item" :class="{active: !theme.font}" @click.stop="theme.font = ''">sans-serif</button>
-                    <button class="dropdown-item font-serif" :class="{active: theme.font == 'serif'}" @click.stop="theme.font = 'serif'">serif</button>
-                    <button class="dropdown-item font-monospace" :class="{active: theme.font == 'monospace'}" @click.stop="theme.font = 'monospace'">monospace</button>
-
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)">A</button>
-                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
-                    </div>
-                </dropdown>
-                <button class="toolbar-item"
-                        :class="{active: itemSelectedReadability}"
-                        @click="toggleReadability()"
-                        title="Read Here">
-                    <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
-                </button>
-                <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link">
-                    <span class="icon">{% inline "external-link.svg" %}</span>
-                </a>
-                <div class="flex-grow-1"></div>
-                <button class="toolbar-item" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
-                    <span class="icon">{% inline "chevron-left.svg" %}</span>
-                </button>
-                <button class="toolbar-item" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || (!itemsHasMore && itemSelected == items[items.length - 1].id)">
-                    <span class="icon">{% inline "chevron-right.svg" %}</span>
-                </button>
-                <button class="toolbar-item" @click="itemSelected=null" title="Close Article">
-                    <span class="icon">{% inline "x.svg" %}</span>
-                </button>
-            </div>
-            <div v-if="itemSelectedDetails"
-                 ref="content"
-                 class="content pane-scroll px-4 pt-3 pb-5 border-top"
-                 :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
-                 :style="{'font-size': theme.size + 'rem'}">
-                <div class="content-wrapper">
-                    <h1><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
-                    <div class="text-muted">
-                        <div>
-                            <span class="cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">
-                                {{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}
-                            </span>
-                        </div>
-                        <time>{{ formatDate(itemSelectedDetails.date) }}</time>
-                    </div>
-                    <hr>
-                    <div v-if="!itemSelectedReadability">
-                        <div v-if="contentImages.length">
-                            <figure v-for="media in contentImages">
-                                <img :src="media.url" loading="lazy">
-                                <figcaption v-if="media.description">{{ media.description }}</figcaption>
-                            </figure>
-                        </div>
-                        <audio class="w-100" controls v-for="media in contentAudios" :src="media.url"></audio>
-                        <video class="w-100" controls v-for="media in contentVideos" :src="media.url"></video>
-                    </div>
-                    <div v-html="itemSelectedContent"></div>
-                </div>
             </div>
         </div>
         <modal :open="!!settings" @hide="settings = ''">
@@ -413,29 +327,6 @@
                     <button class="btn btn-block btn-default mt-3" :class="{loading: loading.newfeed}" type="submit">Add</button>
                 </form>
             </div>
-            <div v-else-if="settings=='shortcuts'">
-                <p class="cursor-default"><b>Keyboard Shortcuts</b></p>
-
-                <table class="table table-borderless table-sm table-compact m-0">
-                    <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
-                                                            <td>show unread / starred / all feeds</td></tr>
-                    <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
-
-                    <tr><td colspan=2>&nbsp;</td></tr>
-                    <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev article</td></tr>
-                    <tr><td><kbd>l</kbd> <kbd>h</kbd></td>  <td>next / prev feed</td></tr>
-                    <tr><td><kbd>q</kbd></td>               <td>close article</td></tr>
-
-                    <tr><td colspan=2>&nbsp;</td></tr>
-                    <tr><td><kbd>R</kbd></td>               <td>mark all read</td></tr>
-                    <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
-                    <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
-                    <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
-                    <tr><td><kbd>i</kbd></td>               <td>read here</td> </tr>
-                    <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
-                    </tr>
-                </table>
-            </div>
         </modal>
     </div>
     <!-- external -->
@@ -443,6 +334,5 @@
     <!-- internal -->
     <script src="./static/javascripts/api.js"></script>
     <script src="./static/javascripts/app.js"></script>
-    <script src="./static/javascripts/key.js"></script>
 </body>
 </html>
