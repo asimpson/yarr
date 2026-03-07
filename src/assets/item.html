@@ -10,29 +10,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 </head>
 <body class="theme-{% .settings.theme_name %}">
-    <main class="px-3 py-3 py-md-4">
-        <div class="content-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <a class="btn btn-default px-3" href="{% .base_path %}/">Back</a>
-                {% if .item.Link %}
-                    <a class="btn btn-link" href="{% .item.Link %}" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer">Open original</a>
-                {% end %}
-            </div>
-
-            <header class="mb-4">
-                <h1 class="mb-3"><b>{% .item.Title %}</b></h1>
-                <div class="text-muted">
-                    {% if .feed %}
-                        <div>{% .feed.Title %}</div>
-                    {% end %}
-                    <time>{% .published %}</time>
-                </div>
-            </header>
-
-            <article class="content px-0 pb-5{% if eq .settings.theme_font "serif" %} font-serif{% else if eq .settings.theme_font "monospace" %} font-monospace{% end %}" style="font-size: {% .settings.theme_size %}rem;">
-                {% .content %}
-            </article>
+    <main class="d-flex flex-column" style="min-height: 100vh; min-height: 100dvh;">
+        <div class="toolbar px-2 d-flex align-items-center">
+            <button class="toolbar-item" type="button" title="Back"
+                    onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '{% .base_path %}/'; }">
+                <span class="icon">{% inline "chevron-left.svg" %}</span>
+            </button>
+            {% if .item.Link %}
+                <a class="toolbar-item ml-2" href="{% .item.Link %}" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link">
+                    <span class="icon">{% inline "external-link.svg" %}</span>
+                </a>
+            {% end %}
+            <div class="flex-grow-1"></div>
+            {% if .feed %}
+                <span class="text-muted small text-truncate ml-3">{% .feed.Title %}</span>
+            {% end %}
         </div>
+
+        <article class="content px-4 pt-3 pb-5 border-top{% if eq .settings.theme_font "serif" %} font-serif{% else if eq .settings.theme_font "monospace" %} font-monospace{% end %}" style="font-size: {% .settings.theme_size %}rem;">
+            <div class="content-wrapper">
+                <header class="mb-4">
+                    <h1 class="mb-3"><b>{% .item.Title %}</b></h1>
+                    <div class="text-muted">
+                        {% if .feed %}
+                            <div>{% .feed.Title %}</div>
+                        {% end %}
+                        <time>{% .published %}</time>
+                    </div>
+                </header>
+
+                {% .content %}
+            </div>
+        </article>
     </main>
 </body>
 </html>
