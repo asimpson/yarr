@@ -2,39 +2,30 @@
 
 var TITLE = document.title
 
+var mobileQuery = window.matchMedia('(max-width: 991.98px)')
+
 function scrollto(target, scroll) {
   var padding = 10
   var targetRect = target.getBoundingClientRect()
 
-  // On mobile, use native window scrolling
-  if (window.matchMedia('(max-width: 991.98px)').matches) {
-    var viewTop = padding
-    var viewBottom = window.innerHeight - padding
-    if (targetRect.y >= viewTop && targetRect.y + targetRect.height <= viewBottom) return
-    var newPos = window.scrollY
-    if (targetRect.y < viewTop) {
-      newPos = window.scrollY + targetRect.y - padding
-    } else {
-      newPos = window.scrollY + targetRect.y - window.innerHeight + targetRect.height + padding
-    }
+  if (mobileQuery.matches) {
+    if (targetRect.y >= padding && targetRect.y + targetRect.height <= window.innerHeight - padding) return
+    var newPos = targetRect.y < padding
+      ? window.scrollY + targetRect.y - padding
+      : window.scrollY + targetRect.y - window.innerHeight + targetRect.height + padding
     window.scrollTo(0, Math.round(newPos))
     return
   }
 
   var scrollRect = scroll.getBoundingClientRect()
-
-  // target
   var relativeOffset = targetRect.y - scrollRect.y
   var absoluteOffset = relativeOffset + scroll.scrollTop
 
   if (padding <= relativeOffset && relativeOffset + targetRect.height <= scrollRect.height - padding) return
 
-  var newPos = scroll.scrollTop
-  if (relativeOffset < padding) {
-    newPos = absoluteOffset - padding
-  } else {
-    newPos = absoluteOffset - scrollRect.height + targetRect.height + padding
-  }
+  var newPos = relativeOffset < padding
+    ? absoluteOffset - padding
+    : absoluteOffset - scrollRect.height + targetRect.height + padding
   scroll.scrollTop = Math.round(newPos)
 }
 
@@ -49,25 +40,13 @@ var debounce = function(callback, wait) {
   }
 }
 
-var mobileQuery = window.matchMedia('(max-width: 991.98px)')
-
 Vue.directive('scroll', {
   inserted: function(el, binding) {
     var handler = debounce(function(event) {
       binding.value(event, el)
     }, 200)
-    // On mobile, the element uses native page scrolling (overflow: visible),
-    // so listen on window instead of the element.
-    var target = mobileQuery.matches ? window : el
-    target.addEventListener('scroll', handler)
-    el._scrollTarget = target
-    el._scrollHandler = handler
-    mobileQuery.addEventListener('change', function(e) {
-      el._scrollTarget.removeEventListener('scroll', el._scrollHandler)
-      var newTarget = e.matches ? window : el
-      newTarget.addEventListener('scroll', handler)
-      el._scrollTarget = newTarget
-    })
+    el.addEventListener('scroll', handler)
+    window.addEventListener('scroll', handler)
   },
 })
 
@@ -384,11 +363,8 @@ var vm = new Vue({
       if (oldVal === undefined) return  // do nothing, initial setup
       api.settings.update({feed: newVal}).then(this.refreshItems.bind(this, false))
       this.itemSelected = null
-      if (mobileQuery.matches) {
-        window.scrollTo(0, 0)
-      } else if (this.$refs.itemlist) {
-        this.$refs.itemlist.scrollTop = 0
-      }
+      window.scrollTo(0, 0)
+      if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
     },
     'itemSelected': function(newVal, oldVal) {
       this.itemSelectedReadability = ''
@@ -396,11 +372,8 @@ var vm = new Vue({
         this.itemSelectedDetails = null
         return
       }
-      if (mobileQuery.matches) {
-        window.scrollTo(0, 0)
-      } else if (this.$refs.content) {
-        this.$refs.content.scrollTop = 0
-      }
+      window.scrollTo(0, 0)
+      if (this.$refs.content) this.$refs.content.scrollTop = 0
 
       api.items.get(newVal).then(function(item) {
         this.itemSelectedDetails = item
