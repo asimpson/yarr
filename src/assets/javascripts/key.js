@@ -4,6 +4,14 @@ var helperFunctions = {
     var scroll = document.querySelector('.content')
     if (!scroll) return
 
+    // On mobile, use native window scrolling
+    if (window.matchMedia('(max-width: 991.98px)').matches) {
+      var height = window.innerHeight
+      var newpos = window.scrollY + (height - padding) * direction
+      window.scrollTo({top: newpos, left: 0, behavior: 'smooth'})
+      return
+    }
+
     var height = scroll.getBoundingClientRect().height
     var newpos = scroll.scrollTop + (height - padding) * direction
 

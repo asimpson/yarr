@@ -611,4 +611,31 @@ a,
   .toolbar-search {
     padding: .5rem;
   }
+
+  /* Use native page scrolling instead of inner-div scrolling.
+     On mobile/tablet only one column is visible at a time,
+     so there's no need for the vh-100 + overflow-auto pattern. */
+  #col-feed-list,
+  #col-item-list,
+  #col-item {
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  #feed-list-scroll,
+  #item-list-scroll,
+  #col-item .content {
+    overflow: visible !important;
+  }
+
+  /* Keep toolbars visible while scrolling */
+  #col-feed-list > .toolbar,
+  #col-item-list > .px-2.toolbar,
+  #col-item > .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: inherit;
+  }
 }
