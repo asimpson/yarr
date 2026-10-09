@@ -5,6 +5,8 @@ weight: 1
 
 {{< img src="promo.png" alt="yarr overview" >}}
 
+## JavaScript app
+
 The main screen has three sections.
 
 1. **Feed list** - Use this section to select a feed or a folder.
@@ -34,3 +36,18 @@ The top bar of the **article content** contains actions for the selected article
 - left chevron - navigate to the previous article in the list
 - right chevron - navigate to the next article in the list
 - close - close and unselect the current article
+
+## HTML reader (no JavaScript)
+
+For a lightweight, mobile-friendly alternative, open `/reader/` on your yarr server
+(or `<base-path>/reader/` if you configured `-base`). The original app remains at
+`/`; both views share the same feeds and article statuses.
+
+The HTML reader uses ordinary links and forms instead of client-side JavaScript.
+Browse all, unread, or starred articles; select a feed or folder; search, sort,
+and page through results. Open an article to read its sanitized content, then
+use the buttons to mark it read/unread or star/unstar it. **Opening an article
+does not mark it read automatically.** Images are lazy-loaded, and audio/video
+are not preloaded. You can add feeds and folders, refresh feeds, and import or
+export OPML from the Subscriptions page. For editing or deleting subscriptions
+and changing app settings, use the JavaScript app.
