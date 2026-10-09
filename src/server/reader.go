@@ -223,10 +223,6 @@ func (s *Server) readerSecure(next http.HandlerFunc) http.HandlerFunc {
 			}
 			return
 		}
-		if r.Method == http.MethodPost && !s.readerValidPost(r) {
-			http.Error(w, "Invalid form token", http.StatusForbidden)
-			return
-		}
 		next(w, r)
 	}
 }
