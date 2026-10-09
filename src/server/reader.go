@@ -378,7 +378,9 @@ func (s *Server) handleReaderList(w http.ResponseWriter, r *http.Request) {
 	for _, item := range items {
 		title := item.Title
 		if title == "" {
-			title = "Untitled"
+			i := s.db(r).GetItem(item.Id)
+			text := htmlutil.ExtractText(i.Content)
+			title = htmlutil.TruncateText(text, 140)
 		}
 		path := root + "items/" + strconv.FormatInt(item.Id, 10)
 		page.Items = append(page.Items, readerItem{
@@ -420,9 +422,6 @@ func (s *Server) handleReaderItem(w http.ResponseWriter, r *http.Request) {
 		Title: item.Title, Date: item.Date,
 		Unread: item.Status == model.UNREAD, Starred: item.Status == model.STARRED,
 		StatusURL: state.href(s.readerRoot() + "items/" + strconv.FormatInt(id, 10) + "/status"),
-	}
-	if article.Title == "" {
-		article.Title = "Untitled"
 	}
 	if feed := s.db(r).GetFeed(item.FeedId); feed != nil {
 		article.FeedTitle = feed.Title

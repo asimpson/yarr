@@ -13,35 +13,13 @@
   <header class="topbar">
     <a class="brand" href="{{.Root}}">yarr<span class="brand-dot">!</span> <small>reader</small></a>
     <nav aria-label="Main navigation">
-      {{if not .Login}}
-        <a href="{{.ListURL}}">Articles</a>
-        <a href="{{.Root}}manage">Subscriptions</a>
-      {{end}}
-      <a href="{{.AppURL}}">JS app</a>
+      <a href="{{.ListURL}}">Articles</a>
+      <a href="{{.Root}}manage">Subscriptions</a>
     </nav>
-    {{if .RequiresAuth}}{{if not .Login}}
-      <form method="post" action="{{.Root}}logout">
-        <input type="hidden" name="csrf" value="{{.Token}}">
-        <button class="text-button" type="submit">Log out</button>
-      </form>
-    {{end}}{{end}}
   </header>
 
   <main id="main" class="container">
-  {{if .Login}}
-    <section class="panel narrow">
-      <h1>Log in</h1>
-      {{if .Error}}<p class="notice error" role="alert">{{.Error}}</p>{{end}}
-      <form method="post" action="{{.Root}}login" class="stack">
-        <input type="hidden" name="csrf" value="{{.Token}}">
-        <label for="username">Username</label>
-        <input id="username" name="username" autocomplete="username" required>
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <button type="submit">Log in</button>
-      </form>
-    </section>
-  {{else if .Article}}
+  {{if .Article}}
     <article class="article">
       <p><a href="{{.ListURL}}">← Back to articles</a></p>
       <h1>{{.Article.Title}}</h1>
@@ -125,7 +103,6 @@
         </form>
         <p><a href="{{.AppURL}}opml/export">Export subscriptions</a></p>
       </section>
-      <p class="muted">To edit or delete feeds and folders, use the <a href="{{.AppURL}}">JS app</a>.</p>
     </div>
   {{else}}
     <div class="layout">
@@ -149,35 +126,15 @@
         </details>
       </aside>
       <section class="results" aria-label="Articles">
-        <h1>Articles</h1>
         <nav class="filters" aria-label="Article filter">
           <a href="{{.UnreadURL}}" {{if eq .Filter "unread"}}aria-current="page"{{end}}>Unread</a>
-          <a href="{{.StarredURL}}" {{if eq .Filter "starred"}}aria-current="page"{{end}}>Starred</a>
           <a href="{{.AllURL}}" {{if eq .Filter "all"}}aria-current="page"{{end}}>All</a>
         </nav>
-        <form method="get" action="{{.Root}}" class="search">
-          {{if ne .Filter "unread"}}<input type="hidden" name="filter" value="{{.Filter}}">{{end}}
-          {{if .FeedID}}<input type="hidden" name="feed" value="{{.FeedID}}">{{end}}
-          {{if .FolderID}}<input type="hidden" name="folder" value="{{.FolderID}}">{{end}}
-          {{if .Oldest}}<input type="hidden" name="order" value="oldest">{{end}}
-          <label for="search">Search articles</label>
-          <div class="inline">
-            <input id="search" name="q" type="search" value="{{.Search}}" maxlength="200" placeholder="Search this selection">
-            <button type="submit">Search</button>
-          </div>
-        </form>
         <div class="toolbar">
-          <span>Sort: <a href="{{.NewestURL}}" {{if not .Oldest}}aria-current="page"{{end}}>Newest</a> · <a href="{{.OldestURL}}" {{if .Oldest}}aria-current="page"{{end}}>Oldest</a></span>
           {{if and (eq .Filter "unread") (not .Search)}}
             <form method="post" action="{{.MarkURL}}">
               <input type="hidden" name="csrf" value="{{.Token}}">
               <button type="submit">Mark all in this feed/folder read</button>
-            </form>
-          {{end}}
-          {{if .CanRefresh}}
-            <form method="post" action="{{.RefreshURL}}">
-              <input type="hidden" name="csrf" value="{{.Token}}">
-              <button type="submit">Refresh feeds</button>
             </form>
           {{end}}
         </div>
@@ -185,7 +142,7 @@
           <ol class="items">
             {{range .Items}}
               <li>
-                <div class="item-meta">{{if .Unread}}<span class="status">● Unread</span>{{else if .Starred}}<span class="status">★ Starred</span>{{end}} {{.FeedTitle}} · <time datetime="{{.Date.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.Format "2 Jan 2006"}}</time></div>
+                <div class="item-meta">{{.FeedTitle}} · <time datetime="{{.Date.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.Format "2 Jan 2006"}}</time></div>
                 <a class="item-title" href="{{.URL}}">{{.Title}}</a>
                 <div class="item-actions">
                   <form method="post" action="{{.StatusURL}}">
@@ -193,12 +150,6 @@
                     <input type="hidden" name="view" value="list">
                     {{if .Unread}}<button type="submit" name="status" value="read">Mark read</button>
                     {{else}}<button type="submit" name="status" value="unread">Mark unread</button>{{end}}
-                  </form>
-                  <form method="post" action="{{.StatusURL}}">
-                    <input type="hidden" name="csrf" value="{{$.Token}}">
-                    <input type="hidden" name="view" value="list">
-                    {{if .Starred}}<button type="submit" name="status" value="read">Remove star</button>
-                    {{else}}<button type="submit" name="status" value="starred">☆ Star</button>{{end}}
                   </form>
                 </div>
               </li>
