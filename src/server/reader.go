@@ -19,7 +19,7 @@ import (
 
 // The reader uses its own routes rather than /static/, which already serves
 // the assets for the JavaScript application.
-const readerPageSize = 20
+const readerPageSize = 200
 
 type readerState struct {
 	Filter   string

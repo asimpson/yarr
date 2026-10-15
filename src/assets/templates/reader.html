@@ -33,11 +33,6 @@
           {{if .Article.Unread}}<button name="status" value="read" type="submit">Mark read</button>
           {{else}}<button name="status" value="unread" type="submit">Mark unread</button>{{end}}
         </form>
-        <form method="post" action="{{.Article.StatusURL}}">
-          <input type="hidden" name="csrf" value="{{.Token}}">
-          {{if .Article.Starred}}<button name="status" value="read" type="submit">Remove star</button>
-          {{else}}<button name="status" value="starred" type="submit">☆ Star</button>{{end}}
-        </form>
         {{if .Article.Link}}<a class="button" href="{{.Article.Link}}" target="_blank" rel="noopener noreferrer">Original article ↗</a>{{end}}
       </div>
       <div class="content">
@@ -115,7 +110,7 @@
               <div class="folder">
                 <a href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>📁 {{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
                 {{range .Feeds}}
-                  <a class="feed" href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>{{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
+                  <a class="feed" {{if (le 1 .Count) style="font-weight: bold;"}} href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>{{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
                 {{end}}
               </div>
             {{end}}
