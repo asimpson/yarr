@@ -110,7 +110,7 @@
               <div class="folder">
                 <a href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>📁 {{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
                 {{range .Feeds}}
-                  <a class="feed" {{if (le 1 .Count) style="font-weight: bold;"}} href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>{{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
+                  <a class="feed" {{if le 1 .Count}}style="font-weight: bold;"{{end}} href="{{.URL}}" {{if .Active}}aria-current="page"{{end}}>{{.Title}}{{if $.ShowCounts}} <small>{{.Count}}</small>{{end}}</a>
                 {{end}}
               </div>
             {{end}}
