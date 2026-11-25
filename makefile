@@ -38,6 +38,9 @@ assets:
 host: assets
 	go build $(GO_FLAGS) -o out/yarr ./cmd/yarr
 
+reader:
+	go build $(GO_FLAGS) -o out/yarr ./cmd/yarr
+
 darwin_amd64: assets
 	# cross-compilation not supported: CC="zig cc -target x86_64-macos-none"
 	GOOS=darwin GOARCH=arm64 go build $(GO_FLAGS) -o out/$@/yarr ./cmd/yarr

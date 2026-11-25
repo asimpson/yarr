@@ -23,6 +23,11 @@ type localAuth struct {
 }
 
 func NewLocalAuthProvider(username, password, basepath string) AuthProvider {
+	// An explicit root path lets both /login and /reader/login share the
+	// same auth cookie (and lets either logout clear it).
+	if basepath == "" {
+		basepath = "/"
+	}
 	return &localAuth{Username: username, Password: password, BasePath: basepath}
 }
 

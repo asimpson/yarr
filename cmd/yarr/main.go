@@ -221,7 +221,7 @@ func main() {
 	wrk := worker.NewWorker(store, httpClient)
 
 	if username != "" && password != "" {
-		srv.Auth = server.NewLocalAuthProvider(username, password, basepath)
+		srv.Auth = server.NewLocalAuthProvider(username, password, srv.BasePath)
 	}
 	srv.Storage = server.NewLocalStorage(store)
 	srv.Scheduler = wrk

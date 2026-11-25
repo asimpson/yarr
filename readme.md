@@ -9,6 +9,9 @@
 
 ![screenshot](etc/promo.png)
 
+For a lightweight, JavaScript-free reading view, visit `/reader/` on your server
+(or `<base-path>/reader/` when using `-base`). The original app remains at `/`.
+
 <div align="center">
   <a href="https://nkanaev.github.io/yarr/en/">documentation</a> / 
   <a href="https://github.com/nkanaev/yarr/releases">releases</a>
